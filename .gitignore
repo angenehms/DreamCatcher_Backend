@@ -1,6 +1,15 @@
+### OS 특성 파일 ###
+.DS_Store
+Thumbs.db
+desktop.ini
+
+### Log Files ###
+*.log
+
 HELP.md
 .gradle
 build/
+**/build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
@@ -42,3 +51,15 @@ application-*.yml
 
 ### 환경변수 파일 ###
 .env
+
+# AI Agent 공통 지시사항 파일 제외
+ai-rules.md
+
+# Docker Volumes (Local Database Files)
+mysql-data/
+redis-data/
+
+# Docker Volumes Optional: If you use other variants of these folders
+*/mysql-data/
+*/redis-data/
+
