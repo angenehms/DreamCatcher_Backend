@@ -53,7 +53,7 @@ application-*.yml
 .env
 
 # AI Agent 공통 지시사항 파일 제외
-ai-rules.md
+prompt.md
 
 # Docker Volumes (Local Database Files)
 mysql-data/
