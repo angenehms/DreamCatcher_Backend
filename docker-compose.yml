@@ -1,0 +1,107 @@
+services:
+  dc-server-1:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      dc-mysql:
+        condition: service_healthy
+      dc-redis:
+        condition: service_healthy
+    networks:
+      - dc-network
+  #    environment:
+  #      - SPRING_PROFILES_ACTIVE=prod
+  #      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+  #      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+  #      - MYSQL_DATABASE=${MYSQL_DATABASE}
+  #      - REDIS_PASSWORD=${REDIS_PASSWORD}
+  #      - MYSQL_CONTAINER_NAME=dc-mysql
+  #      - REDIS_CONTAINER_NAME=dc-redis
+
+  dc-server-2:
+    build: .
+    ports:
+      - "8081:8080"
+    depends_on:
+      dc-mysql:
+        condition: service_healthy
+      dc-redis:
+        condition: service_healthy
+    networks:
+      - dc-network
+  #    environment:
+  #      - SPRING_PROFILES_ACTIVE=prod
+  #      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+  #      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+  #      - MYSQL_DATABASE=${MYSQL_DATABASE}
+  #      - REDIS_PASSWORD=${REDIS_PASSWORD}
+  #      - MYSQL_CONTAINER_NAME=dc-mysql
+  #      - REDIS_CONTAINER_NAME=dc-redis
+
+  dc-server-3:
+    build: .
+    ports:
+      - "8082:8080"
+    depends_on:
+      dc-mysql:
+        condition: service_healthy
+      dc-redis:
+        condition: service_healthy
+    networks:
+      - dc-network
+  #    environment:
+  #      - SPRING_PROFILES_ACTIVE=prod
+  #      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+  #      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+  #      - MYSQL_DATABASE=${MYSQL_DATABASE}
+  #      - REDIS_PASSWORD=${REDIS_PASSWORD}
+  #      - MYSQL_CONTAINER_NAME=dc-mysql
+  #      - REDIS_CONTAINER_NAME=dc-redis
+
+  dc-mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    #      TZ: Asia/Seoul
+    volumes:
+      - ./mysql-data:/var/lib/mysql # 바인드 마운트 방식
+    networks:
+      - dc-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ] # 건강 검진 방법
+      interval: 5s   # 5초마다 검사
+      timeout: 5s    # 5초 넘으면 실패로 간주
+      retries: 10    # 10번 연속 실패하면 '비정상'으로 판단
+    command: # DB에서 SQL 로 직접 하던 그 설정 여기서 도커 실행될 때 하는 command 명령
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+
+  dc-redis:
+    image: redis:7.0-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis-data:/data
+    networks:
+      - dc-network
+    command: [ "redis-server", "--requirepass", "${REDIS_PASSWORD}" ]
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+networks:
+  dc-network:
+    driver: bridge
+
+## 네임드 볼륨 방식 (docker 스스로가 자체 내부 깊숙한 설정에 의해 저장소를 관리하는데 거기서 아래 이름을 가지고 데이터를 저장함, 호스트 컴퓨터의 디스크에 저장되는 것임! 그래서 경로가 어딘지는 도커에게 물어봐야함)
+#volumes:
+#  mysql-data:
+#  redis-data:
