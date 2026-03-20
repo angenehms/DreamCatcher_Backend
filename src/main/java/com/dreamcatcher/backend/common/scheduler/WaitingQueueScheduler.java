@@ -58,4 +58,21 @@ public class WaitingQueueScheduler {
         }
     }
 
+    /**
+     * 30초마다 실행되는 만료자 청소부(TTL) 스케줄러 (Redis TTL 기능은 아니고 수동으로 기능만 흉내 구현)
+     * cron = "0/30 * * * * *" : 매 30초마다 실행
+     */
+    @Scheduled(cron = "0/30 * * * * *")
+    public void evictExpiredActiveUsers() {
+        long now = System.currentTimeMillis();
+
+        // Active 서랍(ZSET)에서 점수(Score)가 0부터 현재 시간(now)까지인 유저들을 모두 삭제
+        // = "만료 시간이 이미 지나버린(과거가 된) 유저들을 삭제하라"
+        Long removedCount = redisTemplate.opsForZSet().removeRangeByScore(ACTIVE_QUEUE_KEY, 0, now);
+
+        if (removedCount != null && removedCount > 0) {
+            log.info("========== 대기열 청소부 스케줄러 실행: 만료된 ACTIVE 유저 {}명 추방 완료 ==========", removedCount);
+        }
+    }
+
 }
