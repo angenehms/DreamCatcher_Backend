@@ -62,4 +62,3 @@ redis-data/
 # Docker Volumes Optional: If you use other variants of these folders
 */mysql-data/
 */redis-data/
-
