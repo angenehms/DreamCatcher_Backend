@@ -62,3 +62,6 @@ redis-data/
 # Docker Volumes Optional: If you use other variants of these folders
 */mysql-data/
 */redis-data/
+
+# 프로젝트 진행시 생겼던 질문들 정리한 파일
+note.md
