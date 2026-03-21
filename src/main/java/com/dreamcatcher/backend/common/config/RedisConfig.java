@@ -78,7 +78,8 @@ public class RedisConfig {
         // "우리는 클러스터(여러 대)가 아니라 단일 Redis 서버 1대만 쓸 거야" 라고 알려줍니다.
         config.useSingleServer()
                 // "이 주소(예: redis://127.0.0.1:6379)로 접속해!" 라고 세팅합니다.
-                .setAddress(REDISSON_HOST_PREFIX + host + ":" + port);
+                .setAddress(REDISSON_HOST_PREFIX + host + ":" + port)
+                .setPassword(password); // Redisson에도 비밀번호 설정 추가!
 
         // 위 설정을 바탕으로 진짜 통신 객체인 RedissonClient를 만들어서 스프링에게 던져줍니다.
         return Redisson.create(config);
