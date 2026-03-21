@@ -1,5 +1,8 @@
 package com.dreamcatcher.backend.common.config;
 
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -62,5 +65,22 @@ public class RedisConfig {
         redisTemplate.setHashValueSerializer(new StringRedisSerializer());
 
         return redisTemplate;
+    }
+
+    // Redisson은 주소 앞에 반드시 "redis://" 를 붙여줘야 합니다.
+    private static final String REDISSON_HOST_PREFIX = "redis://";
+
+    // 스프링 빈으로 등록하여 다른 곳에서 DI(주입) 받을 수 있게 합니다.
+    @Bean
+    public RedissonClient redissonClient() {
+        Config config = new Config(); // Redisson 전용 설정 객체 생성
+
+        // "우리는 클러스터(여러 대)가 아니라 단일 Redis 서버 1대만 쓸 거야" 라고 알려줍니다.
+        config.useSingleServer()
+                // "이 주소(예: redis://127.0.0.1:6379)로 접속해!" 라고 세팅합니다.
+                .setAddress(REDISSON_HOST_PREFIX + host + ":" + port);
+
+        // 위 설정을 바탕으로 진짜 통신 객체인 RedissonClient를 만들어서 스프링에게 던져줍니다.
+        return Redisson.create(config);
     }
 }
