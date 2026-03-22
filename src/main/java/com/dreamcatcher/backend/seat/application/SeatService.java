@@ -1,5 +1,8 @@
 package com.dreamcatcher.backend.seat.application;
 
+import com.dreamcatcher.backend.common.enums.SeatStatus;
+import com.dreamcatcher.backend.seat.domain.Seat;
+import com.dreamcatcher.backend.seat.domain.SeatRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -20,12 +23,12 @@ public class SeatService {
     
     // (임시) 원래는 SeatRepository를 주입받아 DB 좌석 상태를 바꿔야 함
     // 하지만 지금은 락 획득 테스트에 집중하기 위해 Repository 코드는 생략
-    // private final SeatRepository seatRepository;
+    private final SeatRepository seatRepository;
 
     private static final String ACTIVE_QUEUE_KEY = "queue:active";
     private static final String LOCK_PREFIX = "lock:seat:"; // 락 이름 규칙
 
-    @Transactional
+    @Transactional // 트랜잭션이 있어야 변경 감지(Dirty Checking)가 동작하여 DB가 수정됨
     public void reserveSeat(Long seatId, String userId) {
         
         // 1. 인가 로직 - 이 유저가 ACTIVE 서랍에 있는지 (대기열을 통과했는지) 검사
@@ -47,14 +50,29 @@ public class SeatService {
                 throw new IllegalStateException("이미 다른 분이 예매 중인 좌석입니다.");
             }
 
+            // --- DB 연동 비즈니스 로직 시작하는 부분(DB 접근) ---
             // --- 여기부터는 '오직 1명'만 들어올 수 있는 완벽하게 안전한 구역 ---
             log.info("[Seat: {}] 락 획득 성공! 예매 로직을 시작합니다. (User: {})", seatId, userId);
 
-            // 4. 진짜 비즈니스 로직 (DB 접근) 
-            // - seatRepository.findById(seatId) 로 좌석을 찾고, 
-            // - 상태가 AVAILABLE 인지 확인 후 RESERVED 로 바꿉니다.
+            // - seatRepository.findById(seatId) 로 좌석을 찾고,
+            Seat seat = seatRepository.findById(seatId)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 좌석입니다."));
+
+            // 이중 검증 -> 내가 락을 얻기 위해 밖에서 대기하는 동안 누군가 예매를 끝냈을 수 있음!
+            if (seat.getSeatStatus() == SeatStatus.RESERVED) {
+                log.warn("[Seat: {}] 이미 예매 완료된 좌석입니다. (User: {})", seatId, userId);
+                throw new IllegalStateException("이미 다른 분이 예매를 완료한 좌석입니다.");
+            }
+
+            // 상태가 AVAILABLE 인지 확인 후 RESERVED 로 바꿉니다.
+            // 내 것으로 상태 변경 (임시 선점)
+            seat.setSeatStatus(SeatStatus.RESERVED);
+            // @Transactional 이 붙어있으므로, 이 메서드가 에러 없이 끝나면 JPA가 알아서 UPDATE 쿼리를 날립니다.
+
             // 지금은 실제 DB 업데이트 대신 1초 대기하는 것으로 무거운 로직만 흉내내기
-            Thread.sleep(1000); // 이게 실제 DB 접근 로직을 임시 대체한 것
+            // 실제 운영환경에서 필요한 코드는 아님
+            // 테스트 시에 컴퓨터 연산속도는 너무 빨라서 우리가 테스트 하는 데 속도를 못따라가서 삽입해놓은 코드
+//            Thread.sleep(1000); // 이게 실제 DB 접근 로직을 임시 대체한 것
 
             log.info("[Seat: {}] 예매 완료 (User: {})", seatId, userId);
             // --- 안전 구역 끝 ---
