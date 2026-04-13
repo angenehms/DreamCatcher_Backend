@@ -1,4 +1,17 @@
 services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80" # 클라이언트는 이제 80포트(기본 HTTP)로 접속합니다.
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf # Nginx 설정 파일 마운트
+    depends_on:
+      - dc-server-1
+      - dc-server-2
+      - dc-server-3
+    networks:
+      - dc-network
+
   dc-server-1:
     build: .
     ports:
@@ -10,14 +23,14 @@ services:
         condition: service_healthy
     networks:
       - dc-network
-  #    environment:
-  #      - SPRING_PROFILES_ACTIVE=prod
-  #      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
-  #      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
-  #      - MYSQL_DATABASE=${MYSQL_DATABASE}
-  #      - REDIS_PASSWORD=${REDIS_PASSWORD}
-  #      - MYSQL_CONTAINER_NAME=dc-mysql
-  #      - REDIS_CONTAINER_NAME=dc-redis
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
+#      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+#      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+#      - MYSQL_DATABASE=${MYSQL_DATABASE}
+#      - REDIS_PASSWORD=${REDIS_PASSWORD}
+#      - MYSQL_CONTAINER_NAME=dc-mysql
+#      - REDIS_CONTAINER_NAME=dc-redis
 
   dc-server-2:
     build: .
@@ -30,14 +43,14 @@ services:
         condition: service_healthy
     networks:
       - dc-network
-  #    environment:
-  #      - SPRING_PROFILES_ACTIVE=prod
-  #      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
-  #      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
-  #      - MYSQL_DATABASE=${MYSQL_DATABASE}
-  #      - REDIS_PASSWORD=${REDIS_PASSWORD}
-  #      - MYSQL_CONTAINER_NAME=dc-mysql
-  #      - REDIS_CONTAINER_NAME=dc-redis
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
+#      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+#      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+#      - MYSQL_DATABASE=${MYSQL_DATABASE}
+#      - REDIS_PASSWORD=${REDIS_PASSWORD}
+#      - MYSQL_CONTAINER_NAME=dc-mysql
+#      - REDIS_CONTAINER_NAME=dc-redis
 
   dc-server-3:
     build: .
@@ -50,14 +63,14 @@ services:
         condition: service_healthy
     networks:
       - dc-network
-  #    environment:
-  #      - SPRING_PROFILES_ACTIVE=prod
-  #      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
-  #      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
-  #      - MYSQL_DATABASE=${MYSQL_DATABASE}
-  #      - REDIS_PASSWORD=${REDIS_PASSWORD}
-  #      - MYSQL_CONTAINER_NAME=dc-mysql
-  #      - REDIS_CONTAINER_NAME=dc-redis
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=prod
+#      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+#      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+#      - MYSQL_DATABASE=${MYSQL_DATABASE}
+#      - REDIS_PASSWORD=${REDIS_PASSWORD}
+#      - MYSQL_CONTAINER_NAME=dc-mysql
+#      - REDIS_CONTAINER_NAME=dc-redis
 
   dc-mysql:
     image: mysql:8.0
