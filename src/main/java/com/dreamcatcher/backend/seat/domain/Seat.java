@@ -34,9 +34,12 @@ public class Seat extends BaseEntity {
     @Column(name="price", nullable = false)
     private Integer price;
 
+    // 만료된 좌석을 롤백(Rollback)하기 위해, 누가 선점했는지 기록하는 필드 추가
+    @Column(name="reserved_by_user_id")
+    private String reservedByUserId;
+
     @Version
     @Column(name="version")
     private Integer version; // 분산락의 예외처리 누락으로 발생되는 엣지한 경우 방지하기 위해 낙관적 락도 함께 구현하기 위함
 
 } // end of Seat
-
