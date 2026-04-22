@@ -37,8 +37,9 @@ public class SeatService {
             throw new IllegalStateException("이미 다른 분이 예매를 완료한 좌석입니다.");
         }
 
-        // 상태 변경
+        // 상태 변경 및 선점자 ID 기록
         seat.setSeatStatus(SeatStatus.RESERVED);
+        seat.setReservedByUserId(userId);
 
         log.info("[Seat: {}] 예매 완료 (User: {})", seatId, userId);
     }
