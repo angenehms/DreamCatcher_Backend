@@ -49,11 +49,21 @@ class PaymentServiceConcurrentTest {
     @DisplayName("한 명의 유저가 동시에 두 번 결제 요청을 보내면(따닥), 낙관적 락에 의해 1번만 성공하고 1번은 튕겨야 한다.")
     void processPayment_concurrency_test() throws InterruptedException {
         // given: 돈이 10만 원 있는 유저 1번을 생성합니다.
-        Member savedMember = memberRepository.save(new Member(null, "Tester", 100000, 0, false, null, null));
+        Member member = new Member();
+        member.setNickname("Tester");
+        member.setPoint(100000L);
+        member.setVersion(0);
+        Member savedMember = memberRepository.save(member);
         Long userId = savedMember.getMemberId();
 
         // 10만 원짜리 좌석을 만들어두고, 상태는 RESERVED로 미리 세팅해둡니다. (선점 완료 상태)
-        Seat savedSeat = seatRepository.save(new Seat(null, 1L, 1L, SeatStatus.RESERVED, 100000, null, null));
+        Seat seat = new Seat();
+        seat.setConcertScheduleId(1L);
+        seat.setSeatNumber(1L);
+        seat.setSeatStatus(SeatStatus.RESERVED);
+        seat.setPrice(100000);
+        seat.setVersion(0);
+        Seat savedSeat = seatRepository.save(seat);
         Long targetSeatId = savedSeat.getSeatId();
 
         // 결제를 진행하려면 유저가 ACTIVE 상태여야 하므로 Redis에 미리 등록해 둡니다.
@@ -95,7 +105,7 @@ class PaymentServiceConcurrentTest {
         // 2. 다른 1건은 낙관적 락에 걸려 튕겨 나가야 함
         assertThat(failCount.get()).isEqualTo(1);
         // 3. 유저의 잔액은 10만 원이 두 번 깎이는(마이너스 통장) 대참사 없이, 딱 1번만 깎여서 0원이어야 함
-        assertThat(finalMember.getPoint()).isEqualTo(0);
+        assertThat(finalMember.getPoint()).isEqualTo(0L);
         // 4. 낙관적 락이 작동했으므로 엔티티의 버전(version)은 1로 올라가 있어야 함
         assertThat(finalMember.getVersion()).isEqualTo(1);
     }
