@@ -1,5 +1,6 @@
 package com.dreamcatcher.backend.waiting.application;
 
+import com.dreamcatcher.backend.waiting.dto.WaitingStatusResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -33,12 +34,12 @@ public class WaitingQueueService {
      * 유저의 현재 상태(WAITING or ACTIVE)와 순번을 알려줍니다.
      * 클라이언트가 Polling 하기 위한 메서드
      */
-    public String getWaitingStatus(String userId) {
+    public WaitingStatusResponse getWaitingStatus(String userId) {
 
         // 1. 이미 통과한 유저인지 확인 (active 서랍에 있는지)
         boolean isPassed = redisTemplate.opsForZSet().score(ACTIVE_QUEUE_KEY, userId) != null;
         if (isPassed) {
-            return "상태: ACTIVE (접속 가능 - 예매를 진행해 주세요!)";
+            return new WaitingStatusResponse("ACTIVE", 0L, "접속 가능 - 예매를 진행해 주세요!");
         }
 
         // 2. 대기자(Waiting) 서랍에서 내 순위를 조회 (0번부터 시작)
@@ -46,10 +47,10 @@ public class WaitingQueueService {
 
         if (rank != null) {
             // rank가 0이면 내 앞에 0명(즉, 내가 1빠)이라는 뜻입니다.
-            return "상태: WAITING / 내 앞의 대기자 수: " + rank + "명";
+            return new WaitingStatusResponse("WAITING", rank, "현재 대기 중입니다.");
         }
 
         // 3. 두 서랍 모두에 없으면 대기열 진입조차 안 한 상태입니다.
-        return "상태: NOT_FOUND (대기열 진입(POST)을 먼저 호출해 주세요.)";
+        return new WaitingStatusResponse("NOT_FOUND", -1L, "대기열 진입(POST)을 먼저 호출해 주세요.");
     }
 }
