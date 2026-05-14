@@ -3,11 +3,15 @@ package com.dreamcatcher.backend.seat.application;
 import com.dreamcatcher.backend.common.enums.SeatStatus;
 import com.dreamcatcher.backend.seat.domain.Seat;
 import com.dreamcatcher.backend.seat.domain.SeatRepository;
+import com.dreamcatcher.backend.seat.dto.SeatResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -18,6 +22,20 @@ public class SeatService {
     private final SeatRepository seatRepository;
 
     private static final String ACTIVE_QUEUE_KEY = "queue:active";
+
+    // 특정 콘서트의 모든 좌석 정보를 조회하여 반환
+    @Transactional(readOnly = true)
+    public List<SeatResponse> getSeatsByConcertScheduleId(Long concertScheduleId, String userId) {
+        
+        // 대기열 통과 유저만 좌석 조회 가능 (선택 사항이지만 일관성을 위해 추가)
+        checkActiveUser(userId);
+
+        List<Seat> seats = seatRepository.findByConcertScheduleIdOrderBySeatNumberAsc(concertScheduleId);
+        
+        return seats.stream()
+                .map(SeatResponse::from)
+                .collect(Collectors.toList());
+    }
 
     // 트랜잭션의 범위가 비즈니스 로직(DB 접근)으로만 한정됨
     @Transactional
